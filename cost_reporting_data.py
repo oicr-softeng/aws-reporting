@@ -415,6 +415,7 @@ def generate_untagged_overview():
             writer.writerow({'ProductName': use['p'], 'UsageType': use['u'], 'Total cost for UsageType': use['c']})
 
         # Generate subtotals for untagged: volumes, snapshots, AMIs, S3, and data egress
+        writer.writerow({})
         # Volume usage
         untagged_volume_sum = sum([float(x['Cost']) for x in unkept if "Volume" in x.get('UsageType')])
         writer.writerow({'ProductName': "Untagged total for volumes", 'UsageType': untagged_volume_sum})
@@ -423,7 +424,19 @@ def generate_untagged_overview():
         # S3
         untagged_s3_sum = sum([float(x['Cost']) for x in unkept if "Amazon Simple Storage Service" in x.get('ProductName')])
         writer.writerow({'ProductName': "Untagged total for S3", 'UsageType': untagged_s3_sum})
+        # Data egress: based on billing report of Nov 1, any outbound data is identified by:
+        #   containing "Out" in the UsageType (ItemDescription confirms outbound data is being charged)
+        #  XOR
+        #   containing "Out" in the Operation (again, ItemDescription confirms outbound data is being charged)
+        #  There are no line items with "Out" in both fields
+        #  Nearly no lines without "Out" in one of the two fields where ItemDescription refers to outbound data
+        #    ^- exception is some PUT / uploads from S3; however, it does include some other S3 transfer operations
 
+        usage_type_egress = sum([float(x['Cost']) for x in unkept if "Out" in x.get('UsageType')])
+        operation_egress = sum([float(x['Cost']) for x in unkept if "Out" in x.get('Operation')])
+        untagged_egress_sum = usage_type_egress + operation_egress
+        writer.writerow({'ProductName': "Untagged total for data egress (some overlap with S3)",
+                         'UsageType': untagged_egress_sum})
 
 
 def generate_reports():
