@@ -10,10 +10,11 @@ import csv
 from operator import itemgetter
 import pdb
 
-# TODO: not using global variables, fix soon!
+# TODO: not using global variables!
 untagged_volume_sum = 0
 untagged_s3_sum = 0
 untagged_egress_sum = 0
+year_month = ""
 
 class SpreadsheetCache(object):
     def __init__(self):
@@ -66,9 +67,15 @@ class SpreadsheetCache(object):
 
     @staticmethod
     def get_file_from_bucket():
-        """Grab today's billing report from the S3 bucket, extract into pwd, return filename"""
+        """Grab today's billing report from the S3 bucket, extract into pwd, return filename
+        Eventually: Grab a different month's billing report.
+        """
         prefix = "794321122735-aws-billing-detailed-line-items-with-resources-and-tags-"
-        csv_filename = prefix + str(datetime.date.today().isoformat()[0:7]) + ".csv"
+        # Select desired month using date format "YYYY-MM"
+        global year_month
+        year_month = str(datetime.date.today().isoformat()[0:7])  # get the latest report for current month
+#        year_month = "2015-10"  # or select your own month
+        csv_filename = prefix + year_month + ".csv"
         zip_filename = csv_filename + ".zip"
         # If local data is older than 1 day, download fresh data.
         # mod_time = os.path.getmtime(csv_filename)
@@ -291,7 +298,8 @@ def generate_one_report(keeper):
                   'AvailabilityZone', 'Operation', 'UsageType', 'Production?', 'Cost']
         writer = csv.DictWriter(f, fieldnames=fields)
         writer.writerow({})
-        writer.writerow({'user:KEEP': "Report for " + keeper + " from start of month to " + str(datetime.date.today())})
+#        writer.writerow({'user:KEEP': "Report for " + keeper + " from start of month to " + str(datetime.date.today())})
+        writer.writerow({'user:KEEP': "Report for " + keeper + " for the month " + year_month})
         writer.writeheader()
 
         cost_for_keeper = {}
@@ -332,7 +340,9 @@ def generate_untagged_overview():
         fields = ['ProductName', 'ResourceId',  # 'Resource Status (unknown unless available)',
                   'Total cost for resource']
         writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writerow({'ProductName': "Untagged resources from start of month to " + str(datetime.date.today())})
+#        writer.writerow({'ProductName': "Untagged resources from start of month to " + str(datetime.date.today())})
+        writer.writerow({'ProductName': "Untagged resources for month " + year_month})
+
         writer.writerow({})
         writer.writerow({'ProductName': "Untagged resources, grouped by resource id"})
         writer.writeheader()
@@ -473,7 +483,8 @@ def generate_reports():
     with open('reports/overall_keep+prod_summary.csv', 'w') as f:
         fields = ['user:KEEP', 'non-production subtotal', 'production subtotal', 'user total']
         writer = csv.DictWriter(f, fieldnames=fields)
-        writer.writerow({'user:KEEP': "Summary of costs from start of month to " + str(datetime.date.today())})
+#        writer.writerow({'user:KEEP': "Summary of costs from start of month to " + str(datetime.date.today())})
+        writer.writerow({'user:KEEP': "Summary of costs for month " + year_month})
         writer.writeheader()
         writer.writerow({})
         for i in range(len(SC.keepers)):
