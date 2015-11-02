@@ -10,6 +10,10 @@ import csv
 from operator import itemgetter
 import pdb
 
+# TODO: not using global variables, fix soon!
+untagged_volume_sum = 0
+untagged_s3_sum = 0
+untagged_egress_sum = 0
 
 class SpreadsheetCache(object):
     def __init__(self):
@@ -416,6 +420,12 @@ def generate_untagged_overview():
 
         # Generate subtotals for untagged: volumes, snapshots, AMIs, S3, and data egress
         writer.writerow({})
+
+        # global variables! TODO: this, better later
+        global untagged_volume_sum
+        global untagged_s3_sum
+        global untagged_egress_sum
+
         # Volume usage
         untagged_volume_sum = sum([float(x['Cost']) for x in unkept if "Volume" in x.get('UsageType')])
         writer.writerow({'ProductName': "Untagged total for volumes", 'UsageType': untagged_volume_sum})
@@ -455,6 +465,9 @@ def generate_reports():
         cost_for_keeper['user:KEEP'] = keeper
         costs_for_keepers.append(cost_for_keeper)
 
+    # Overview of untagged resources
+    generate_untagged_overview()
+
     # Summarize
     print "Generating summary report..."
     with open('reports/overall_keep+prod_summary.csv', 'w') as f:
@@ -474,18 +487,21 @@ def generate_reports():
                              'non-production subtotal': costs_for_keepers[i][''],
                              'production subtotal': costs_for_keepers[i]['yes'],
                              'user total': total})
-
-    # Overview of untagged resources
-    generate_untagged_overview()
+            # extra subtotals for breakdown of untagged costs
+            if costs_for_keepers[i]['user:KEEP'] is 'untagged':
+                writer.writerow({'user:KEEP': " untagged subtotal for volume usage", 'user total': untagged_volume_sum})
+                writer.writerow({'user:KEEP': " untagged subtotal for S3", 'user total': untagged_s3_sum})
+                writer.writerow({'user:KEEP': " untagged subtotal for data egress (some overlap with S3)",
+                                 'user total': untagged_egress_sum})
 
 
 def main():
     # print_data()  # prints blob of data
-
     # import pdb; pdb.set_trace()
     # generate_one_report('ADAM')
     # generate_one_report('BRIAN')
     # generate_one_report('DENIS')
+
     generate_reports()
 
 if __name__ == '__main__':
