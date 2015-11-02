@@ -426,6 +426,8 @@ def generate_reports():
     # Individual full reports
     for keeper in SC.keepers:
         cost_for_keeper = generate_one_report(keeper)
+        if keeper == '':
+            keeper = 'untagged'  # may want to set this earlier
         cost_for_keeper['user:KEEP'] = keeper
         costs_for_keepers.append(cost_for_keeper)
 
@@ -438,7 +440,7 @@ def generate_reports():
         writer.writeheader()
         writer.writerow({})
         for i in range(len(SC.keepers)):
-            # ok this is not robust at all, but I'm so tired
+            # ok this is not robust at all, TODO: robustify
             if 'yes' not in costs_for_keepers[i]:
                 costs_for_keepers[i]['yes'] = 0
             if '' not in costs_for_keepers[i]:
