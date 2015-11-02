@@ -414,6 +414,21 @@ def generate_untagged_overview():
         for use in l_o_uses:
             writer.writerow({'ProductName': use['p'], 'UsageType': use['u'], 'Total cost for UsageType': use['c']})
 
+        # Generate subtotals for untagged: volumes, snapshots, AMIs, S3, and data egress
+        # Volume usage: seem to be gatherable by using Operation=CreateVolume-Gp2, appears to be the only "Volume" entry
+
+        untagged_volume_sum = sum([float(x['Cost']) for x in unkept if "Volume" in x.get('UsageType')])
+
+        # untagged_volume_sum = 0.0
+        # for x in unkept:
+        #     if "Volume" in x.get('UsageType'):  # why does putting NOT there almost work!?!
+        #         untagged_volume_sum += float(x['Cost'])
+        #         writer.writerow({'ProductName': x.get('Operation'), 'UsageType': x.get('Cost')})
+        #     # there's probably a way to do this as a list comprehension, but see if this works first
+        #     # also, aren't list comprehensions the same complexity as the thing it replaces?
+
+        writer.writerow({'ProductName': "Total for volume", 'UsageType': untagged_volume_sum})
+
 
 def generate_reports():
     """Make reports for list of keepers:
