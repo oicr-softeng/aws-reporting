@@ -6,5 +6,5 @@ RUN apt-get update && apt-get install -y \
 
 RUN git clone https://github.com/oicr-softeng/aws-reporting.git
 RUN pip install boto
-WORKDIR oicr-aws-reporting/
+WORKDIR aws-reporting/
 RUN mkdir reports
